@@ -115,7 +115,9 @@ function minimalPrompt(context: Context, probe: Renderable) {
     set: (value: RGBA) => lines.forEach((line) => (line.fg = soften(value))),
   })
   frame.border = false
-  inner.backgroundColor = "transparent"
+  frame.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
+  inner.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
+  editor.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
   inner.paddingLeft = 0
   inner.paddingRight = 0
   inner.paddingTop = 0

@@ -100,6 +100,8 @@ async function serve(connection, port) {
 async function start(options) {
   const port = await serverPort(options)
   const endpoint = await Endpoint.bind({ secretKey: loadKey().toBytes(), alpns: [ALPN] })
+  // Until it's online nobody can find it, so its address isn't worth giving out. Offline, it still starts.
+  await Promise.race([endpoint.online(), new Promise((resolve) => setTimeout(resolve, 15_000))])
   void (async () => {
     while (true) {
       const incoming = await endpoint.acceptNext()

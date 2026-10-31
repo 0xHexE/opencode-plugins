@@ -30,9 +30,11 @@ install_iroh() {
   staging="$(dirname "$DEST")/.iroh-staging"
   rm -rf "$staging"
   mkdir -p "$staging"
+  echo "Downloading the iroh plugin"
   for file in index.js package.json README.md; do
     curl -fsSL --retry 3 "$BASE/plugins/iroh/$file" -o "$staging/$file"
   done
+  echo "Installing the iroh library"
   if command -v npm >/dev/null 2>&1; then
     npm install --prefix "$staging" --omit=dev --ignore-scripts --no-audit --no-fund >/dev/null
   elif command -v bun >/dev/null 2>&1; then
@@ -42,6 +44,7 @@ install_iroh() {
     echo "error: the iroh plugin needs npm or bun to fetch its dependency" >&2
     exit 1
   fi
+  echo "Moving it into place"
   mkdir -p "$DEST"
   rm -rf "$DEST/iroh"
   mv "$staging" "$DEST/iroh"

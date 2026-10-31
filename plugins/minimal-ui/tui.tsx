@@ -115,9 +115,16 @@ function minimalPrompt(context: Context, probe: Renderable) {
     set: (value: RGBA) => lines.forEach((line) => (line.fg = soften(value))),
   })
   frame.border = false
-  frame.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
-  inner.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
-  editor.backgroundColor = RGBA.fromValues(0, 0, 0, 0)
+  // The host reassigns the prompt background on theme changes, so override the
+  // property instead of setting it once.
+  const transparent = RGBA.fromValues(0, 0, 0, 0)
+  const paint = Object.getOwnPropertyDescriptor(BoxRenderable.prototype, "backgroundColor")!
+  Object.defineProperty(inner, "backgroundColor", {
+    configurable: true,
+    get: () => paint.get!.call(inner),
+    set: () => paint.set!.call(inner, transparent),
+  })
+  paint.set!.call(inner, transparent)
   inner.paddingLeft = 0
   inner.paddingRight = 0
   inner.paddingTop = 0

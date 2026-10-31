@@ -18,12 +18,14 @@ command -v curl >/dev/null 2>&1 || {
 }
 
 for file in "${FILES[@]}"; do
-  target="${file#plugins/}"
-  mkdir -p "$DEST/$(dirname "$target")"
-  echo "Installing $target"
-  curl -fsSL --retry 3 "$BASE/$file" -o "$DEST/$target"
+  target="$DEST/${file#plugins/}"
+  temp="${target}.tmp"
+  mkdir -p "$(dirname "$target")"
+  echo "Installing or updating ${file#plugins/}"
+  curl -fsSL --retry 3 "$BASE/$file" -o "$temp"
+  mv -f "$temp" "$target"
 done
 
 echo
-echo "Installed ${#FILES[@]} plugins into $DEST"
+echo "Installed or updated ${#FILES[@]} plugins in $DEST"
 echo "OpenCode reloads plugins automatically; use /reload if needed."

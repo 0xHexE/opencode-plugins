@@ -20,14 +20,19 @@ curl -fsSL https://raw.githubusercontent.com/0xHexE/opencode-plugins/main/instal
 You can also copy the contents of `plugins/` manually into `~/.config/opencode/plugins/`. OpenCode discovers `.ts`
 and `.js` files and immediate plugin package directories there automatically, so no config entry is needed.
 
+## Update
+
+Run the same install command again. It replaces the existing plugin files in place, so an existing installation is
+updated rather than skipped:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/0xHexE/opencode-plugins/main/install.sh | bash
+```
+
 ## Plugins
 
 | Plugin | Description |
 | --- | --- |
 | `send-file.js` | Adds a `send_file` tool that shows a file as a card in the OpenCode Android app and downloads it over the existing connection. |
 | `close-other-tabs/` | TUI plugin. Adds palette commands **Close other tabs** and **Regenerate title** (F8), plus a tab context-menu entry. |
-| `minimal-ui/` | TUI plugin. Minimal UI styling: tinted message cards, ruled input, pulled-back transcript, and a hidden stock version label. |
-
-## Notes
-
-- No credentials or tokens are stored in this repository.
+| `minimal-ui/` | TUI plugin. Minimal UI styling: tinted message cards, ruled input, pulled-back transcript, one-line footer, and hidden stock chrome. |

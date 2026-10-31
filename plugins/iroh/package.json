@@ -1,0 +1,8 @@
+{
+  "name": "opencode-iroh-tunnel",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": { ".": "./index.js" },
+  "dependencies": { "@number0/iroh": "1.2.0" }
+}

@@ -25,7 +25,13 @@ export default Plugin.define({
     // reference to restyle its renderables without polling. Host updates may change their shape;
     // minimalPrompt bails out on anything unexpected and leaves the stock prompt in place.
     // The footer recreates its version text when a resize crosses its width threshold.
-    const hide = () => setTimeout(() => hideVersion(context), 50)
+    const panes = new Set<Node>()
+    const footers = new Set<Node>()
+    const hide = () =>
+      setTimeout(() => {
+        hideVersion(context)
+        hideCommandHints(footers)
+      }, 50)
     context.renderer.on("resize", hide)
     const unregisterFooter = context.ui.slot({
       append: "home.footer.status",
@@ -36,9 +42,9 @@ export default Plugin.define({
     })
     // Sent messages have no slot and mount and unmount as the transcript scrolls, so each drawn frame
     // restyles any new ones. Rows already handled cost one WeakSet lookup.
-    const panes = new Set<Node>()
     let lastCardScan = 0
     const restyleMessages = async () => {
+      hideCommandHints(footers)
       panes.forEach((pane) => {
         if (pane.isDestroyed) return void panes.delete(pane)
         const scroll = transcript(pane)
@@ -69,7 +75,7 @@ export default Plugin.define({
             if (!probe) return
             const pane = ancestors(probe).find((node) => node.id === SESSION_PANE)
             if (pane) panes.add(pane)
-            minimalPrompt(context, probe)
+            minimalPrompt(context, probe, footers)
           }),
         )
         return <box ref={(node: Renderable) => (probe = node)} position="absolute" width={0} height={0} />
@@ -78,6 +84,8 @@ export default Plugin.define({
     return () => {
       context.renderer.off("resize", hide)
       context.renderer.removeFrameCallback(restyleMessages)
+      panes.clear()
+      footers.clear()
       unregisterFooter()
       unregisterPrompt()
     }
@@ -87,7 +95,7 @@ export default Plugin.define({
 type Node = Renderable & Record<string, any>
 type Context = Parameters<NonNullable<Parameters<typeof Plugin.define>[0]["setup"]>>[0]
 
-function minimalPrompt(context: Context, probe: Renderable) {
+function minimalPrompt(context: Context, probe: Renderable, footers: Set<Node>) {
   const anchor = ancestors(probe).find((node) => children(node).some((child) => findEditor(child)))
   const editor = anchor && findEditor(anchor)
   const inner = editor?.parent as Node | null | undefined
@@ -138,12 +146,15 @@ function minimalPrompt(context: Context, probe: Renderable) {
   marker.add(new TextRenderable(context.renderer, { content: ">", fg: context.theme.text.muted, selectable: false }))
   inner.add(marker)
 
-  // The agent and model join the footer row, still driven by the host. The row wraps when it can't
-  // all fit, because shrinking would break the agent's name mid-word.
+  // The agent and model join the footer row, still driven by the host. Keep the row on one line:
+  // the metadata shrinks and truncates instead of wrapping status and hints onto a second row.
   inner.remove(metadata)
   metadata.paddingTop = 0
-  footer.flexWrap = "wrap"
+  footer.flexWrap = "nowrap"
   footer.add(metadata, 0)
+
+  footers.add(footer)
+  hideCommandHints(footers)
 
   if (context.ui.router.current().type === "home") minimalHome(anchor)
 }
@@ -263,6 +274,21 @@ function hideVersion(context: Context) {
   version.parent.visible = false
   row.paddingTop = 0
   row.paddingBottom = 0
+}
+
+// The prompt footer advertises the command palette at its right edge. Hide just that text, leaving
+// the shortcut itself alone; the footer recreates the text when it relayouts after a resize.
+function hideCommandHints(footers: Set<Node>) {
+  for (const footer of footers) {
+    if (footer.isDestroyed) {
+      footers.delete(footer)
+      continue
+    }
+    const hint = descendants(footer).find((node) =>
+      /^[a-z0-9+]+(?: [a-z0-9+]+)* commands$/.test(node.plainText?.trim() ?? ""),
+    )
+    if (hint) hint.visible = false
+  }
 }
 
 function descendants(node: Node): Node[] {
